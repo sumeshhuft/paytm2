@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Create QR Code</title>
+  </head>
+  <body>
+    <h1>Create QR Code</h1>
+    <form action="/create-qr-code" method="POST">
+      <label for="orderId">Order ID:</label>
+      <input type="text" id="orderId" name="orderId" required>
+      <br>
+      <label for="amount">Amount:</label>
+      <input type="text" id="amount" name="amount" required>
+      <br>
+      <button type="submit">Create QR Code</button>
+    </form>
+  </body>
+</html>
