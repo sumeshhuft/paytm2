@@ -101,7 +101,6 @@ const app = express();
 const bodyParser = require('body-parser');
 const https = require('https');
 const PaytmChecksum = require('./PaytmChecksum');
-const fs = require('fs');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -111,11 +110,12 @@ app.get('/', (req, res) => {
 
 app.post('/create-qr-code', (req, res) => {
   const { orderId, amount } = req.body;
-  createQRCode(orderId, amount);
-  res.send('QR code creation initiated');
+  createQRCode(orderId, amount, (deepLink) => {
+    res.redirect(deepLink); // Redirect client to the deep link
+  });
 });
 
-function createQRCode(orderId, amount) {
+function createQRCode(orderId, amount, callback) {
   const paytmParams = {
     mid: "test5P07128923987041",
     orderId: orderId,
@@ -157,7 +157,11 @@ function createQRCode(orderId, amount) {
           console.log('Response: ', response);
           try {
             let jsonResponse = JSON.parse(response);
-            extractAndUseQRCodeDetails(jsonResponse, orderId, amount);
+            const qrData = jsonResponse.body.qrData;
+            const port = "COM5";
+            const deepLink = `PaytmPayments:?requestId=123;method=displayTxnQr;mid=test5P07128923987041;portName=${port};baudRate=115200;parity=0;dataBits=8;stopBits=1;order_id=${orderId};order_amount=${amount};qrcode_id=${qrData};currencySign=null;debugMode=1;posid=POS-1`;
+            console.log("Deep Link:", deepLink);
+            callback(deepLink); // Call the callback with the generated deep link
           } catch (error) {
             console.error('Error parsing response:', error);
           }
@@ -174,17 +178,6 @@ function createQRCode(orderId, amount) {
     .catch(function(error) {
       console.error('Error generating checksum:', error);
     });
-}
-let url;
-function extractAndUseQRCodeDetails(response, orderId, amount) {
-  const qrCodeId = response.body.qrCodeId;
-  const qrData = response.body.qrData;
-  const image = response.body.image; 
-  const port = "COM5";
-  console.log({ qrCodeId, qrData, image, port, orderId, amount });
-
-   url = `PaytmPayments:?requestId=123;method=displayTxnQr;mid=test5P07128923987041;portName=${port};baudRate=115200;parity=0;dataBits=8;stopBits=1;order_id=${orderId};order_amount=${amount};qrcode_id=${qrData};currencySign=null;debugMode=1;posid=POS-1`;
-  console.log(url);
 }
 
 const PORT = 3001;
